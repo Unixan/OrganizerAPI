@@ -22,26 +22,28 @@ public class UserData : IUserData
         return res;
     }
 
-    public async Task<object> CreateUser(NewUser user)
+    public async Task<User> CreateUser(NewUser user)
     {
 
         if (IsNotValid(user)) return null;
+        if (await CheckIfExists(user.Email)) return null;
         user.UserId = Guid.NewGuid();
-        try
-        {
-            var conn = new SqlConnection(_connstring);
-            const string sql =
-                "INSERT [User] (UserId, ScreenName, Email, Password) VALUES (@UserId, @ScreenName, @Email, @Password)";
-            var affectedRows = await conn.ExecuteAsync(sql, user);
-            return affectedRows;
-        }
-        catch
-        {
-            return false;
-        }
+        var conn = new SqlConnection(_connstring);
+        const string sql =
+              "INSERT [User] (UserId, ScreenName, Email, Password) VALUES (@UserId, @ScreenName, @Email, @Password)";
+        var affectedRows = await conn.ExecuteAsync(sql, user);
+        if (affectedRows < 1) return null;
+        var res = await GetUser(new AuthData(user.Email, user.Password));
+        return res;
+    }
 
-
-
+    private async Task<bool> CheckIfExists(string email)
+    {
+        var conn = new SqlConnection(_connstring);
+        const string sql = "SELECT * FROM [User] WHERE Email = @email";
+        var res = await conn.QueryFirstOrDefaultAsync<User>(sql, new { email });
+        if (res == null) return false;
+        return true;
     }
 
     private bool IsNotValid(object obj)

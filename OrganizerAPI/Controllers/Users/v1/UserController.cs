@@ -25,7 +25,7 @@ namespace OrganizerAPI.Controllers.Users.v1
         }
 
         [HttpPost("createUser")]
-        public async Task<object> CreatNewUser([FromBody] NewUser newUser)
+        public async Task<User> CreatNewUser([FromBody] NewUser newUser)
         {
             return await _userData.CreateUser(newUser);
         }
